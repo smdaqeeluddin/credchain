@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useWallet } from "../../context/WalletContext";
+import DownloadCertificate from "../../components/DownloadCertificate";
 
 function CredentialCard({ tokenId, contract }) {
   const [cred, setCred] = useState(null);
@@ -49,20 +50,23 @@ function CredentialCard({ tokenId, contract }) {
           <p>Issued: {metadata.attributes.issueDate}</p>
         </div>
       )}
-      <div className="flex gap-2 mt-3">
-        <button
-          onClick={() => setShowQR(!showQR)}
-          className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition"
-        >
-          {showQR ? "Hide" : "Share QR"}
-        </button>
-        <button
-          onClick={() => window.open("/verify?id=" + tokenId, "_blank")}
-          className="text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200 transition"
-        >
-          Open Verify Link
-        </button>
-      </div>
+      <div className="flex gap-2 mt-3 flex-wrap">
+  <button
+    onClick={() => setShowQR(!showQR)}
+    className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition"
+  >
+    {showQR ? "Hide" : "Share QR"}
+  </button>
+  <button
+    onClick={() => window.open("/verify?id=" + tokenId, "_blank")}
+    className="text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200 transition"
+  >
+    Open Verify Link
+  </button>
+  {metadata && (
+    <DownloadCertificate cred={cred} metadata={metadata} tokenId={tokenId} />
+  )}
+</div>
       {showQR && (
         <div className="mt-4 flex flex-col items-center">
           <img
