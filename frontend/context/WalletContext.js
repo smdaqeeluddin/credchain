@@ -23,6 +23,19 @@ export function WalletProvider({ children }) {
       const accounts = await window.ethereum.request({
         method: "eth_requestAccounts",
       });
+      const chainId = await window.ethereum.request({ method: "eth_chainId" });
+if (chainId !== "0xaa36a7") {
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: "0xaa36a7" }],
+    });
+  } catch (err) {
+    alert("Please switch to Sepolia network manually in MetaMask!");
+    setLoading(false);
+    return;
+  }
+}
       const web3Provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await web3Provider.getSigner();
       const credContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
