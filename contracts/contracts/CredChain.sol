@@ -10,15 +10,16 @@ contract CredChain is ERC721, Ownable {
     Counters.Counter private _tokenIds;
 
     struct Credential {
-        uint256 tokenId;
-        address issuer;
-        address recipient;
-        string ipfsHash;
-        bytes32 credentialHash;
-        uint256 issuedAt;
-        bool revoked;
-        string credentialType;
-    }
+    uint256 tokenId;
+    address issuer;
+    address recipient;
+    string ipfsHash;
+    bytes32 credentialHash;
+    uint256 issuedAt;
+    uint256 expiresAt;
+    bool revoked;
+    string credentialType;
+}
 
     mapping(address => bool) public approvedIssuers;
     mapping(address => string) public issuerNames;
@@ -45,11 +46,12 @@ contract CredChain is ERC721, Ownable {
     }
 
     function issueCredential(
-        address recipient,
-        string memory ipfsHash,
-        string memory credentialType,
-        bytes32 credentialHash
-    ) external returns (uint256) {
+    address recipient,
+    string memory ipfsHash,
+    string memory credentialType,
+    bytes32 credentialHash,
+    uint256 expiresAt
+)  external returns (uint256) {
         require(approvedIssuers[msg.sender], "Not an approved issuer");
         require(recipient != address(0), "Invalid recipient");
 
@@ -58,15 +60,16 @@ contract CredChain is ERC721, Ownable {
         _safeMint(recipient, newTokenId);
 
         credentials[newTokenId] = Credential({
-            tokenId: newTokenId,
-            issuer: msg.sender,
-            recipient: recipient,
-            ipfsHash: ipfsHash,
-            credentialHash: credentialHash,
-            issuedAt: block.timestamp,
-            revoked: false,
-            credentialType: credentialType
-        });
+    tokenId: newTokenId,
+    issuer: msg.sender,
+    recipient: recipient,
+    ipfsHash: ipfsHash,
+    credentialHash: credentialHash,
+    issuedAt: block.timestamp,
+    expiresAt: expiresAt,
+    revoked: false,
+    credentialType: credentialType
+});
 
         holderCredentials[recipient].push(newTokenId);
         emit CredentialIssued(newTokenId, msg.sender, recipient, credentialType);
@@ -84,7 +87,7 @@ contract CredChain is ERC721, Ownable {
     function verifyCredential(uint256 tokenId) external returns (bool) {
         Credential storage cred = credentials[tokenId];
         require(cred.issuedAt != 0, "Credential does not exist");
-        bool valid = !cred.revoked;
+        bool valid = !cred.revoked && (cred.expiresAt == 0 || cred.expiresAt > block.timestamp);
         verificationLog[msg.sender][tokenId] = block.timestamp;
         tokenVerifiers[tokenId].push(msg.sender);
         emit CredentialVerified(tokenId, msg.sender, valid);

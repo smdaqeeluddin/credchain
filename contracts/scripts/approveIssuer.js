@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
 async function main() {
-  const CONTRACT_ADDRESS = "0xC6Ff93F1c4279715ea0a9a1A2CC293350ff1a00C";
+  const CONTRACT_ADDRESS = "0x9C4FC779d234B86921c3F73C59873b723D733f58";
   const ISSUER_ADDRESS = "0x28c90aA178520687f3aFdAbD79139B7BFC0e124F";
   const ISSUER_NAME = "R N S Institute Of Technology";
 

@@ -29,18 +29,18 @@ function CredentialCard({ tokenId, contract }) {
     return <div className="animate-pulse bg-gray-200 h-40 rounded-xl" />;
 
   return (
-    <div className="bg-white rounded-xl shadow border-l-4 border-green-500 p-5">
+    <div className={`bg-white rounded-xl shadow border-l-4 ${cred[7] ? "border-red-400" : "border-green-500"} p-5`}>
       <div className="flex justify-between items-start mb-3">
         <div>
           <p className="font-bold text-lg text-blue-900">
             {metadata ? metadata.name : "Loading..."}
           </p>
           <p className="text-sm text-gray-500">
-            {cred[7]} Token {tokenId}
+            {cred[8]} Token {tokenId}
           </p>
         </div>
-        <span className="text-xs px-2 py-1 rounded-full font-semibold bg-green-100 text-green-700">
-          {cred[6] ? "Revoked" : "Valid"}
+        <span className={`text-xs px-2 py-1 rounded-full font-semibold ${cred[7] ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+          {cred[7] ? "Revoked" : "Valid"}
         </span>
       </div>
       {metadata && (
@@ -56,8 +56,7 @@ function CredentialCard({ tokenId, contract }) {
         >
           {showQR ? "Hide" : "Share QR"}
         </button>
-        
-          <button
+        <button
           onClick={() => window.open("/verify?id=" + tokenId, "_blank")}
           className="text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200 transition"
         >
@@ -66,8 +65,14 @@ function CredentialCard({ tokenId, contract }) {
       </div>
       {showQR && (
         <div className="mt-4 flex flex-col items-center">
-          <p className="text-xs font-mono break-all text-gray-500">{verifyUrl}</p>
-          <p className="text-xs text-gray-400 mt-2">Share this link to verify</p>
+          <img
+            src={"https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=" + encodeURIComponent(verifyUrl)}
+            alt="QR Code"
+            width={160}
+            height={160}
+          />
+          <p className="text-xs text-gray-400 mt-2">Scan to verify</p>
+          <p className="text-xs font-mono break-all text-gray-500 mt-1">{verifyUrl}</p>
         </div>
       )}
     </div>

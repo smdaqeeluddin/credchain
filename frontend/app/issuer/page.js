@@ -2,16 +2,19 @@
 import { useState } from "react";
 import { useWallet } from "../../context/WalletContext";
 import { ethers } from "ethers";
+import emailjs from "@emailjs/browser";
 
 export default function IssuerPage() {
   const { account, contract, isIssuer, issuerName, connectWallet } = useWallet();
   const [form, setForm] = useState({
     recipientAddress: "",
     recipientName: "",
+    recipientEmail: "",
     credentialTitle: "",
     credentialType: "DEGREE",
     institution: "",
     issueDate: "",
+    expiryDate: "",
     description: "",
   });
   const [status, setStatus] = useState({ loading: false, success: null, error: null, tokenId: null });
@@ -51,18 +54,43 @@ export default function IssuerPage() {
         )
       );
 
+      const expiresAt = form.expiryDate 
+        ? Math.floor(new Date(form.expiryDate).getTime() / 1000)
+        : 0;
+
       const tx = await contract.issueCredential(
         form.recipientAddress,
         ipfsHash,
         form.credentialType,
-        credentialHash
+        credentialHash,
+        expiresAt
       );
       const receipt = await tx.wait();
       const event = receipt.logs.find((l) => l.fragment?.name === "CredentialIssued");
       const tokenId = event ? event.args[0].toString() : "unknown";
 
+      // Send email notification
+try {
+  await emailjs.send(
+    process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
+    process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
+    {
+      to_email: form.recipientEmail,
+      recipient_name: form.recipientName,
+      credential_title: form.credentialTitle,
+      institution: form.institution || issuerName,
+      issue_date: form.issueDate,
+      token_id: tokenId,
+      verify_url: `${window.location.origin}/verify?id=${tokenId}`,
+    },
+    process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
+  );
+} catch (emailErr) {
+  console.log("Email failed:", emailErr);
+}
+
       setStatus({ loading: false, success: true, error: null, tokenId });
-      setForm({ recipientAddress: "", recipientName: "", credentialTitle: "", credentialType: "DEGREE", institution: "", issueDate: "", description: "" });
+      setForm({ recipientAddress: "", recipientName: "", recipientEmail: "", credentialTitle: "", credentialType: "DEGREE", institution: "", issueDate: "", expiryDate: "", description: "" });
     } catch (err) {
       setStatus({ loading: false, success: false, error: err.message, tokenId: null });
     }
@@ -112,9 +140,13 @@ export default function IssuerPage() {
             <input name="recipientAddress" value={form.recipientAddress} onChange={handleChange} placeholder="0x..." required className="w-full border rounded-lg px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Recipient Full Name *</label>
-            <input name="recipientName" value={form.recipientName} onChange={handleChange} placeholder="Jane Doe" required className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Recipient Full Name *</label>
+  <input name="recipientName" value={form.recipientName} onChange={handleChange} placeholder="Jane Doe" required className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+</div>
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Recipient Email *</label>
+  <input type="email" name="recipientEmail" value={form.recipientEmail} onChange={handleChange} placeholder="jane@example.com" required className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+</div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Credential Title *</label>
             <input name="credentialTitle" value={form.credentialTitle} onChange={handleChange} placeholder="B.Tech Computer Science" required className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -130,9 +162,13 @@ export default function IssuerPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Issue Date *</label>
-              <input type="date" name="issueDate" value={form.issueDate} onChange={handleChange} required className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Issue Date *</label>
+  <input type="date" name="issueDate" value={form.issueDate} onChange={handleChange} required className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+</div>
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date (optional)</label>
+  <input type="date" name="expiryDate" value={form.expiryDate} onChange={handleChange} className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+</div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
