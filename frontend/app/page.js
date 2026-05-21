@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+console.log("Contract address:", process.env.NEXT_PUBLIC_CONTRACT_ADDRESS);
 import { useWallet } from "../context/WalletContext";
 
 export default function Home() {
