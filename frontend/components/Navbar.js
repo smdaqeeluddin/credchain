@@ -10,6 +10,7 @@ export default function Navbar() {
       <div className="flex items-center gap-6">
         <Link href="/" className="text-2xl font-bold tracking-tight">CredChain</Link>
         <Link href="/verify" className="hover:text-blue-300 transition">Verify</Link>
+<Link href="/employer" className="hover:text-yellow-300 transition">💼 Employer</Link>
 <Link href="/zkproof" className="hover:text-purple-300 transition">🔐 ZK Proof</Link>
         {account && (
           <>
