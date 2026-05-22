@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../../utils/contract";
 import { useWallet } from "../../context/WalletContext";
 import { verifyProof } from "../../utils/zkp";
+import ReputationScore from "../../components/ReputationScore";
 
 export default function VerifyPage() {
   const [tokenId, setTokenId] = useState("");
@@ -207,6 +208,7 @@ export default function VerifyPage() {
                   <p className="font-mono text-xs text-gray-500 break-all mt-2">Issuer: {result.issuer}</p>
                   <p className="font-mono text-xs text-gray-500 break-all">Recipient: {result.recipient}</p>
                   <p className="text-xs text-gray-400 mt-2">IPFS: ipfs://{result.ipfsHash}</p>
+                  <ReputationScore cred={result} metadata={result.metadata} tokenId={result.tokenId} />
                   {verifiers.length > 0 && (
                     <div className="mt-4 border-t pt-3">
                       <p className="font-semibold text-sm text-gray-700 mb-2">Verification Audit Trail ({verifiers.length} checks)</p>

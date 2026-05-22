@@ -10,16 +10,26 @@ export default function Navbar() {
       <div className="flex items-center gap-6">
         <Link href="/" className="text-2xl font-bold tracking-tight">CredChain</Link>
         <Link href="/verify" className="hover:text-blue-300 transition">Verify</Link>
+<Link href="/passport" className="hover:text-indigo-300 transition">🌐 Passport</Link>
 <Link href="/employer" className="hover:text-yellow-300 transition">💼 Employer</Link>
 <Link href="/zkproof" className="hover:text-purple-300 transition">🔐 ZK Proof</Link>
         {account && (
-          <>
-            <Link href="/dashboard" className="hover:text-blue-300 transition">My Credentials</Link>
+  <>
+    <Link href="/dashboard" className="hover:text-blue-300 transition">My Credentials</Link>
+    <Link href="/requests" className="hover:text-purple-300 transition">📬 Requests</Link>
             {isIssuer && (
-              <Link href="/issuer" className="hover:text-green-300 transition font-semibold">
-                Issue Credential
-              </Link>
-            )}
+  <>
+    <Link href="/issuer" className="hover:text-green-300 transition font-semibold">
+      Issue Credential
+    </Link>
+    <Link href="/institution" className="hover:text-yellow-300 transition font-semibold">
+      🏛️ Institution
+    </Link>
+    <Link href="/multisig" className="hover:text-orange-300 transition font-semibold">
+      ✍️ Multi-Sig
+    </Link>
+  </>
+)}
           </>
         )}
       </div>

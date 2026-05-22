@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../../context/WalletContext";
 import DownloadCertificate from "../../components/DownloadCertificate";
+import ReputationScore from "../../components/ReputationScore";
 
 function CredentialCard({ tokenId, contract }) {
   const [cred, setCred] = useState(null);
@@ -45,11 +46,14 @@ function CredentialCard({ tokenId, contract }) {
         </span>
       </div>
       {metadata && (
-        <div className="text-sm text-gray-600 space-y-1 mb-3">
-          <p>Institution: {metadata.attributes.institution}</p>
-          <p>Issued: {metadata.attributes.issueDate}</p>
-        </div>
-      )}
+  <div className="text-sm text-gray-600 space-y-1 mb-3">
+    <p>Institution: {metadata.attributes?.institution}</p>
+    <p>Issued: {metadata.attributes?.issueDate}</p>
+  </div>
+)}
+{cred && metadata && (
+  <ReputationScore cred={cred} metadata={metadata} tokenId={tokenId} />
+)}
       <div className="flex gap-2 mt-3 flex-wrap">
   <button
     onClick={() => setShowQR(!showQR)}
