@@ -13,24 +13,17 @@ export default function RequestsPage() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const storageKey = account ? `credchain_requests_${account.toLowerCase()}` : null;
-
-  useEffect(() => {
-    if (!account) return;
-    loadRequests();
-  }, [account]);
+  useEffect(() => { if (account) loadRequests(); }, [account]);
 
   const loadRequests = () => {
     setLoading(true);
     try {
-      const allKeys = Object.keys(localStorage);
       const incoming = [];
-      allKeys.forEach(key => {
+      Object.keys(localStorage).forEach(key => {
         if (key.startsWith("credchain_req_to_")) {
           const target = key.replace("credchain_req_to_", "").split("_")[0];
           if (target.toLowerCase() === account.toLowerCase()) {
-            const data = JSON.parse(localStorage.getItem(key));
-            incoming.push(data);
+            incoming.push(JSON.parse(localStorage.getItem(key)));
           }
         }
       });
@@ -44,31 +37,20 @@ export default function RequestsPage() {
     setSending(true);
     try {
       const request = {
-        id: Date.now().toString(),
-        from: account,
-        fromCompany: companyName,
-        to: recipientAddress.toLowerCase(),
-        purpose,
-        status: "PENDING",
+        id: Date.now().toString(), from: account, fromCompany: companyName,
+        to: recipientAddress.toLowerCase(), purpose, status: "PENDING",
         createdAt: new Date().toISOString(),
       };
-      const key = `credchain_req_to_${recipientAddress.toLowerCase()}_${request.id}`;
-      localStorage.setItem(key, JSON.stringify(request));
+      localStorage.setItem(`credchain_req_to_${recipientAddress.toLowerCase()}_${request.id}`, JSON.stringify(request));
       setSent(true);
-      setRecipientAddress("");
-      setCompanyName("");
-      setPurpose("");
+      setRecipientAddress(""); setCompanyName(""); setPurpose("");
       setTimeout(() => setSent(false), 3000);
-    } catch (err) {
-      alert("Failed: " + err.message);
-    } finally {
-      setSending(false);
-    }
+    } catch (err) { alert("Failed: " + err.message); }
+    finally { setSending(false); }
   };
 
   const handleRespond = (requestId, response) => {
-    const allKeys = Object.keys(localStorage);
-    allKeys.forEach(key => {
+    Object.keys(localStorage).forEach(key => {
       if (key.includes(requestId)) {
         const data = JSON.parse(localStorage.getItem(key));
         data.status = response;
@@ -78,152 +60,252 @@ export default function RequestsPage() {
     loadRequests();
   };
 
+  const S = {
+    page: {
+      minHeight: "100vh",
+      background: "radial-gradient(ellipse at 30% 20%, rgba(15,36,96,0.4) 0%, transparent 60%), #020818",
+      fontFamily: "'DM Sans', sans-serif", padding: "48px 24px",
+    },
+    card: {
+      background: "linear-gradient(135deg, rgba(10,26,74,0.8), rgba(5,15,46,0.9))",
+      border: "1px solid rgba(201,168,76,0.15)",
+      borderRadius: "20px", padding: "32px",
+    },
+    label: {
+      display: "block", fontSize: "11px", fontWeight: "600",
+      letterSpacing: "0.08em", color: "rgba(201,168,76,0.8)", marginBottom: "8px",
+    },
+    input: {
+      width: "100%", background: "rgba(5,15,46,0.8)",
+      border: "1px solid rgba(201,168,76,0.2)",
+      borderRadius: "10px", color: "white",
+      fontFamily: "'DM Sans', sans-serif",
+      fontSize: "14px", padding: "12px 16px",
+      outline: "none", boxSizing: "border-box",
+    },
+    tabActive: {
+      flex: 1, padding: "10px", borderRadius: "10px",
+      border: "1px solid rgba(201,168,76,0.4)",
+      background: "rgba(201,168,76,0.12)",
+      color: "#e2ce94", fontWeight: "600", fontSize: "13px",
+      cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    },
+    tabInactive: {
+      flex: 1, padding: "10px", borderRadius: "10px",
+      border: "1px solid rgba(255,255,255,0.06)",
+      background: "rgba(255,255,255,0.03)",
+      color: "rgba(180,195,230,0.5)", fontWeight: "500", fontSize: "13px",
+      cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    },
+  };
+
   if (!account) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <p className="text-6xl mb-4">📬</p>
-        <p className="text-gray-600 mb-4">Connect wallet to access credential requests.</p>
-        <button onClick={connectWallet} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-          Connect Wallet
-        </button>
+    <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: "64px", marginBottom: "20px" }}>📬</div>
+        <p style={{ fontFamily: "'Playfair Display', serif", fontSize: "24px", fontWeight: "700", color: "white", marginBottom: "8px" }}>
+          Verification Requests
+        </p>
+        <p style={{ color: "rgba(180,195,230,0.6)", marginBottom: "28px", fontSize: "14px" }}>
+          Connect wallet to access credential requests.
+        </p>
+        <button onClick={connectWallet} style={{
+          background: "linear-gradient(135deg, #c9a84c, #d4b96a)", border: "none",
+          borderRadius: "10px", padding: "12px 28px", fontSize: "14px",
+          fontWeight: "600", color: "#020818", cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+        }}>Connect Wallet</button>
       </div>
     </div>
   );
 
+  const pendingCount = requests.filter(r => r.status === "PENDING").length;
+
   return (
-    <div className="max-w-2xl mx-auto py-10 px-4">
-      <div className="mb-8">
-        <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-bold mb-3">
-          CREDENTIAL REQUESTS
+    <div style={S.page}>
+      <div style={{ maxWidth: "640px", margin: "0 auto" }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: "32px" }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center",
+            background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.25)",
+            borderRadius: "20px", padding: "4px 14px", marginBottom: "16px",
+            fontSize: "11px", fontWeight: "600", letterSpacing: "0.08em", color: "#c9a84c",
+          }}>✦ CREDENTIAL REQUESTS</div>
+          <h1 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: "36px", fontWeight: "700", color: "white", marginBottom: "8px",
+          }}>Verification Requests</h1>
+          <p style={{ fontSize: "14px", color: "rgba(180,195,230,0.6)" }}>
+            Consent-based credential verification. GDPR compliant.
+          </p>
         </div>
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Verification Requests</h1>
-        <p className="text-gray-500">Consent-based credential verification. GDPR compliant.</p>
-      </div>
 
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setActiveTab("send")}
-          className={`flex-1 py-2 rounded-lg font-semibold text-sm transition ${activeTab === "send" ? "bg-purple-700 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-        >
-          Send Request
-        </button>
-        <button
-          onClick={() => { setActiveTab("inbox"); loadRequests(); }}
-          className={`flex-1 py-2 rounded-lg font-semibold text-sm transition ${activeTab === "inbox" ? "bg-purple-700 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-        >
-          Inbox {requests.filter(r => r.status === "PENDING").length > 0 && (
-            <span className="ml-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-              {requests.filter(r => r.status === "PENDING").length}
-            </span>
-          )}
-        </button>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-lg p-8">
-        {activeTab === "send" && (
-          <div>
-            <p className="text-sm text-gray-500 mb-6">Request a candidate to share their verified credentials with you.</p>
-
-            {sent && (
-              <div className="bg-green-50 border border-green-300 rounded-lg p-4 mb-4 text-green-700 font-semibold">
-                Request sent successfully!
-              </div>
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
+          <button onClick={() => setActiveTab("send")} style={activeTab === "send" ? S.tabActive : S.tabInactive}>
+            Send Request
+          </button>
+          <button onClick={() => { setActiveTab("inbox"); loadRequests(); }} style={{
+            ...(activeTab === "inbox" ? S.tabActive : S.tabInactive),
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+          }}>
+            Inbox
+            {pendingCount > 0 && (
+              <span style={{
+                background: "#f87171", color: "white", borderRadius: "999px",
+                padding: "1px 7px", fontSize: "10px", fontWeight: "700",
+              }}>{pendingCount}</span>
             )}
+          </button>
+        </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Your Company Name</label>
-                <input
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="e.g. Infosys HR Team"
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Candidate Wallet Address</label>
-                <input
-                  value={recipientAddress}
-                  onChange={(e) => setRecipientAddress(e.target.value)}
-                  placeholder="0x..."
-                  className="w-full border rounded-lg px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Purpose of Verification</label>
-                <select
-                  value={purpose}
-                  onChange={(e) => setPurpose(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="">Select purpose</option>
-                  <option value="Job Application">Job Application</option>
-                  <option value="Background Check">Background Check</option>
-                  <option value="Loan Application">Loan Application</option>
-                  <option value="Visa Application">Visa Application</option>
-                  <option value="University Admission">University Admission</option>
-                </select>
-              </div>
-              <button
-                onClick={handleSendRequest}
-                disabled={sending}
-                className="w-full bg-purple-700 text-white py-3 rounded-xl font-bold hover:bg-purple-800 transition disabled:opacity-50"
-              >
-                {sending ? "Sending..." : "Send Verification Request"}
-              </button>
-            </div>
-          </div>
-        )}
+        <div style={S.card}>
 
-        {activeTab === "inbox" && (
-          <div>
-            <p className="text-sm text-gray-500 mb-6">Verification requests sent to your wallet.</p>
+          {/* Send Tab */}
+          {activeTab === "send" && (
+            <div>
+              <p style={{ fontSize: "13px", color: "rgba(180,195,230,0.5)", marginBottom: "24px" }}>
+                Request a candidate to share their verified credentials with you.
+              </p>
 
-            {loading && <p className="text-gray-400 text-sm">Loading...</p>}
+              {sent && (
+                <div style={{
+                  background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.3)",
+                  borderRadius: "10px", padding: "14px 16px", marginBottom: "20px",
+                  color: "#34d399", fontWeight: "600", fontSize: "13px",
+                }}>✓ Request sent successfully!</div>
+              )}
 
-            {!loading && requests.length === 0 && (
-              <div className="text-center text-gray-400 py-8">
-                <p className="text-4xl mb-3">📭</p>
-                <p>No requests yet.</p>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              {requests.map((req) => (
-                <div key={req.id} className={`border rounded-xl p-5 ${req.status === "PENDING" ? "border-purple-200 bg-purple-50" : req.status === "APPROVED" ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <p className="font-bold text-gray-800">{req.fromCompany}</p>
-                      <p className="text-xs text-gray-500 font-mono">{req.from.slice(0, 8)}...{req.from.slice(-6)}</p>
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded-full font-bold ${req.status === "PENDING" ? "bg-purple-100 text-purple-700" : req.status === "APPROVED" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                      {req.status}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-1">Purpose: <span className="font-semibold">{req.purpose}</span></p>
-                  <p className="text-xs text-gray-400 mb-4">{new Date(req.createdAt).toLocaleString()}</p>
-
-                  {req.status === "PENDING" && (
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => handleRespond(req.id, "APPROVED")}
-                        className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition text-sm"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleRespond(req.id, "DENIED")}
-                        className="flex-1 bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600 transition text-sm"
-                      >
-                        Deny
-                      </button>
-                    </div>
-                  )}
+              <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                <div>
+                  <label style={S.label}>YOUR COMPANY NAME</label>
+                  <input value={companyName} onChange={e => setCompanyName(e.target.value)}
+                    placeholder="e.g. Infosys HR Team" style={S.input}
+                    onFocus={e => e.target.style.borderColor = "#c9a84c"}
+                    onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"}
+                  />
                 </div>
-              ))}
+                <div>
+                  <label style={S.label}>CANDIDATE WALLET ADDRESS</label>
+                  <input value={recipientAddress} onChange={e => setRecipientAddress(e.target.value)}
+                    placeholder="0x..." style={{ ...S.input, fontFamily: "'DM Mono', monospace", fontSize: "13px" }}
+                    onFocus={e => e.target.style.borderColor = "#c9a84c"}
+                    onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"}
+                  />
+                </div>
+                <div>
+                  <label style={S.label}>PURPOSE OF VERIFICATION</label>
+                  <select value={purpose} onChange={e => setPurpose(e.target.value)} style={{
+                    ...S.input, cursor: "pointer",
+                    appearance: "none", WebkitAppearance: "none",
+                  }}
+                  onFocus={e => e.target.style.borderColor = "#c9a84c"}
+                  onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"}
+                  >
+                    <option value="" style={{ background: "#050f2e" }}>Select purpose</option>
+                    {["Job Application", "Background Check", "Loan Application", "Visa Application", "University Admission"].map(p => (
+                      <option key={p} value={p} style={{ background: "#050f2e" }}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ height: "1px", background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent)" }} />
+
+                <button onClick={handleSendRequest} disabled={sending} style={{
+                  background: sending ? "rgba(201,168,76,0.3)" : "linear-gradient(135deg, #c9a84c, #d4b96a)",
+                  border: "none", borderRadius: "12px", padding: "14px",
+                  fontSize: "14px", fontWeight: "600",
+                  color: sending ? "rgba(2,8,24,0.4)" : "#020818",
+                  cursor: sending ? "not-allowed" : "pointer",
+                  fontFamily: "'DM Sans', sans-serif", width: "100%",
+                }}>
+                  {sending ? "Sending..." : "Send Verification Request"}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Inbox Tab */}
+          {activeTab === "inbox" && (
+            <div>
+              <p style={{ fontSize: "13px", color: "rgba(180,195,230,0.5)", marginBottom: "20px" }}>
+                Verification requests sent to your wallet.
+              </p>
+
+              {loading && <p style={{ color: "rgba(201,168,76,0.5)", fontSize: "13px" }}>Loading...</p>}
+
+              {!loading && requests.length === 0 && (
+                <div style={{ textAlign: "center", padding: "48px", color: "rgba(180,195,230,0.4)" }}>
+                  <p style={{ fontSize: "48px", marginBottom: "12px" }}>📭</p>
+                  <p style={{ fontSize: "14px" }}>No requests yet.</p>
+                </div>
+              )}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {requests.map((req) => {
+                  const isPending = req.status === "PENDING";
+                  const isApproved = req.status === "APPROVED";
+                  const borderColor = isPending ? "rgba(201,168,76,0.25)" : isApproved ? "rgba(52,211,153,0.25)" : "rgba(248,113,113,0.25)";
+                  const bgColor = isPending ? "rgba(201,168,76,0.05)" : isApproved ? "rgba(52,211,153,0.05)" : "rgba(248,113,113,0.05)";
+                  const statusColor = isPending ? "#c9a84c" : isApproved ? "#34d399" : "#f87171";
+
+                  return (
+                    <div key={req.id} style={{
+                      border: `1px solid ${borderColor}`,
+                      background: bgColor,
+                      borderRadius: "14px", padding: "20px",
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+                        <div>
+                          <p style={{ fontSize: "15px", fontWeight: "600", color: "white", marginBottom: "3px" }}>
+                            {req.fromCompany}
+                          </p>
+                          <p style={{ fontSize: "11px", color: "rgba(180,195,230,0.4)", fontFamily: "'DM Mono', monospace" }}>
+                            {req.from.slice(0, 8)}...{req.from.slice(-6)}
+                          </p>
+                        </div>
+                        <span style={{
+                          background: `${statusColor}18`,
+                          border: `1px solid ${statusColor}40`,
+                          borderRadius: "20px", padding: "3px 10px",
+                          fontSize: "10px", fontWeight: "700", color: statusColor,
+                          letterSpacing: "0.06em",
+                        }}>{req.status}</span>
+                      </div>
+
+                      <p style={{ fontSize: "13px", color: "rgba(180,195,230,0.6)", marginBottom: "4px" }}>
+                        Purpose: <span style={{ color: "white", fontWeight: "500" }}>{req.purpose}</span>
+                      </p>
+                      <p style={{ fontSize: "11px", color: "rgba(180,195,230,0.3)", marginBottom: isPending ? "16px" : "0" }}>
+                        {new Date(req.createdAt).toLocaleString()}
+                      </p>
+
+                      {isPending && (
+                        <div style={{ display: "flex", gap: "10px" }}>
+                          <button onClick={() => handleRespond(req.id, "APPROVED")} style={{
+                            flex: 1, background: "rgba(52,211,153,0.1)",
+                            border: "1px solid rgba(52,211,153,0.3)",
+                            borderRadius: "8px", padding: "9px",
+                            fontSize: "13px", fontWeight: "600", color: "#34d399",
+                            cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                          }}>Approve</button>
+                          <button onClick={() => handleRespond(req.id, "DENIED")} style={{
+                            flex: 1, background: "rgba(248,113,113,0.1)",
+                            border: "1px solid rgba(248,113,113,0.3)",
+                            borderRadius: "8px", padding: "9px",
+                            fontSize: "13px", fontWeight: "600", color: "#f87171",
+                            cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                          }}>Deny</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

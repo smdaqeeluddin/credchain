@@ -13,176 +13,301 @@ export default function EmployerPage() {
 
   const handleSingleVerify = async () => {
     if (!tokenId.trim()) return;
-    setLoading(true);
-    setResult(null);
-    setError(null);
+    setLoading(true); setResult(null); setError(null);
     try {
       const res = await fetch(`/api/check/${tokenId}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
   const handleBulkVerify = async () => {
     const ids = bulkInput.split("\n").map(id => id.trim()).filter(Boolean);
     if (!ids.length) return;
-    setBulkLoading(true);
-    setBulkResults([]);
+    setBulkLoading(true); setBulkResults([]);
     const results = await Promise.all(
       ids.map(async (id) => {
         try {
           const res = await fetch(`/api/check/${id}`);
           const data = await res.json();
           return { tokenId: id, ...data };
-        } catch {
-          return { tokenId: id, error: "Failed", valid: false, status: "ERROR" };
-        }
+        } catch { return { tokenId: id, error: "Failed", valid: false, status: "ERROR" }; }
       })
     );
-    setBulkResults(results);
-    setBulkLoading(false);
+    setBulkResults(results); setBulkLoading(false);
+  };
+
+  const S = {
+    page: {
+      minHeight: "100vh",
+      background: "radial-gradient(ellipse at 30% 20%, rgba(15,36,96,0.4) 0%, transparent 60%), #020818",
+      fontFamily: "'DM Sans', sans-serif",
+      padding: "48px 24px",
+    },
+    wrapper: { maxWidth: "720px", margin: "0 auto" },
+    card: {
+      background: "linear-gradient(135deg, rgba(10,26,74,0.8), rgba(5,15,46,0.9))",
+      border: "1px solid rgba(201,168,76,0.15)",
+      borderRadius: "20px", padding: "32px",
+    },
+    input: {
+      flex: 1, background: "rgba(5,15,46,0.8)",
+      border: "1px solid rgba(201,168,76,0.2)",
+      borderRadius: "10px", color: "white",
+      fontFamily: "'DM Mono', monospace",
+      fontSize: "14px", padding: "13px 16px", outline: "none",
+    },
+    btnGold: {
+      background: "linear-gradient(135deg, #c9a84c, #d4b96a)",
+      border: "none", borderRadius: "10px",
+      padding: "13px 28px", fontSize: "14px",
+      fontWeight: "600", color: "#020818",
+      cursor: "pointer", fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
+    },
+    tabActive: {
+      flex: 1, padding: "10px", borderRadius: "10px",
+      border: "1px solid rgba(201,168,76,0.4)",
+      background: "rgba(201,168,76,0.12)",
+      color: "#e2ce94", fontWeight: "600", fontSize: "13px",
+      cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    },
+    tabInactive: {
+      flex: 1, padding: "10px", borderRadius: "10px",
+      border: "1px solid rgba(255,255,255,0.06)",
+      background: "rgba(255,255,255,0.03)",
+      color: "rgba(180,195,230,0.5)", fontWeight: "500", fontSize: "13px",
+      cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    },
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-10 px-4">
-      <div className="mb-8">
-        <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold mb-3">
-          EMPLOYER PORTAL
+    <div style={S.page}>
+      <div style={S.wrapper}>
+
+        {/* Header */}
+        <div style={{ marginBottom: "32px" }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center",
+            background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.25)",
+            borderRadius: "20px", padding: "4px 14px", marginBottom: "16px",
+            fontSize: "11px", fontWeight: "600", letterSpacing: "0.08em", color: "#c9a84c",
+          }}>✦ EMPLOYER PORTAL</div>
+          <h1 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: "36px", fontWeight: "700", color: "white", marginBottom: "8px",
+          }}>Credential Verification</h1>
+          <p style={{ fontSize: "14px", color: "rgba(180,195,230,0.6)" }}>
+            Instantly verify candidate credentials. No login required.
+          </p>
         </div>
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Credential Verification</h1>
-        <p className="text-gray-500">Instantly verify candidate credentials. No login required.</p>
-      </div>
 
-      <div className="bg-gray-900 text-green-400 rounded-xl p-4 mb-6 font-mono text-xs">
-        <p className="text-gray-400 mb-1">REST API — integrate into your HR system:</p>
-        <p>GET /api/check/{"{tokenId}"}</p>
-        <p className="text-gray-500 mt-1">Returns: status, issuer, credentialType, valid</p>
-      </div>
+        {/* API Banner */}
+        <div style={{
+          background: "rgba(2,8,24,0.9)",
+          border: "1px solid rgba(52,211,153,0.2)",
+          borderRadius: "14px", padding: "16px 20px",
+          marginBottom: "24px", fontFamily: "'DM Mono', monospace",
+        }}>
+          <p style={{ fontSize: "10px", color: "rgba(52,211,153,0.5)", marginBottom: "6px", letterSpacing: "0.08em" }}>
+            REST API — INTEGRATE INTO YOUR HR SYSTEM
+          </p>
+          <p style={{ fontSize: "13px", color: "#34d399" }}>
+            GET /api/check/<span style={{ color: "#fbbf24" }}>{"{tokenId}"}</span>
+          </p>
+          <p style={{ fontSize: "11px", color: "rgba(52,211,153,0.4)", marginTop: "4px" }}>
+            Returns: status, issuer, credentialType, valid, issuedAt
+          </p>
+        </div>
 
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setActiveTab("single")}
-          className={`flex-1 py-2 rounded-lg font-semibold text-sm transition ${activeTab === "single" ? "bg-blue-700 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-        >
-          Single Verify
-        </button>
-        <button
-          onClick={() => setActiveTab("bulk")}
-          className={`flex-1 py-2 rounded-lg font-semibold text-sm transition ${activeTab === "bulk" ? "bg-blue-700 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-        >
-          Bulk Verify
-        </button>
-      </div>
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
+          <button onClick={() => setActiveTab("single")} style={activeTab === "single" ? S.tabActive : S.tabInactive}>
+            Single Verify
+          </button>
+          <button onClick={() => setActiveTab("bulk")} style={activeTab === "bulk" ? S.tabActive : S.tabInactive}>
+            Bulk Verify
+          </button>
+        </div>
 
-      <div className="bg-white rounded-2xl shadow-lg p-8">
-        {activeTab === "single" && (
-          <div>
-            <p className="text-sm text-gray-500 mb-4">Enter the candidate's Credential Token ID</p>
-            <div className="flex gap-3 mb-6">
-              <input
-                value={tokenId}
-                onChange={(e) => setTokenId(e.target.value)}
-                placeholder="Token ID (e.g. 2)"
-                className="flex-1 border rounded-lg px-4 py-3 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                onClick={handleSingleVerify}
-                disabled={loading}
-                className="bg-blue-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-800 transition disabled:opacity-50"
-              >
-                {loading ? "Checking..." : "Verify"}
-              </button>
-            </div>
+        <div style={S.card}>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">{error}</div>
-            )}
-
-            {result && (
-              <div className={`rounded-xl border-2 p-6 ${result.valid ? "border-green-400 bg-green-50" : "border-red-400 bg-red-50"}`}>
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-4xl">{result.valid ? "✅" : "❌"}</span>
-                  <div>
-                    <p className={`text-2xl font-bold ${result.valid ? "text-green-700" : "text-red-700"}`}>
-                      {result.status}
-                    </p>
-                    <p className="text-sm text-gray-500">Token {result.tokenId} - {result.credentialType}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="bg-white rounded-lg p-3">
-                    <p className="text-gray-400 text-xs mb-1">ISSUED</p>
-                    <p className="font-semibold">{new Date(result.issuedAt).toLocaleDateString()}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-3">
-                    <p className="text-gray-400 text-xs mb-1">EXPIRES</p>
-                    <p className="font-semibold">{result.expiresAt ? new Date(result.expiresAt).toLocaleDateString() : "No Expiry"}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-3 col-span-2">
-                    <p className="text-gray-400 text-xs mb-1">ISSUER</p>
-                    <p className="font-mono text-xs break-all">{result.issuer}</p>
-                  </div>
-                </div>
+          {/* Single Tab */}
+          {activeTab === "single" && (
+            <div>
+              <p style={{ fontSize: "13px", color: "rgba(180,195,230,0.5)", marginBottom: "20px" }}>
+                Enter the candidate's Credential Token ID
+              </p>
+              <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
+                <input
+                  value={tokenId}
+                  onChange={(e) => setTokenId(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSingleVerify()}
+                  placeholder="Token ID (e.g. 2)"
+                  style={S.input}
+                  onFocus={e => e.target.style.borderColor = "#c9a84c"}
+                  onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"}
+                />
                 <button
-                  onClick={() => window.open(`https://sepolia.etherscan.io/address/${result.issuer}`, "_blank")}
-                  className="mt-3 text-xs text-blue-600 hover:underline"
+                  onClick={handleSingleVerify}
+                  disabled={loading}
+                  style={{ ...S.btnGold, opacity: loading ? 0.5 : 1, cursor: loading ? "not-allowed" : "pointer" }}
                 >
-                  View issuer on Etherscan →
+                  {loading ? "Checking..." : "Verify"}
                 </button>
               </div>
-            )}
-          </div>
-        )}
 
-        {activeTab === "bulk" && (
-          <div>
-            <p className="text-sm text-gray-500 mb-4">Enter one Token ID per line to verify multiple candidates</p>
-            <textarea
-              value={bulkInput}
-              onChange={(e) => setBulkInput(e.target.value)}
-              placeholder={"1\n2\n3"}
-              rows={5}
-              className="w-full border rounded-lg px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
-            />
-            <button
-              onClick={handleBulkVerify}
-              disabled={bulkLoading}
-              className="w-full bg-blue-700 text-white py-3 rounded-lg font-bold hover:bg-blue-800 transition disabled:opacity-50 mb-6"
-            >
-              {bulkLoading ? "Verifying..." : "Verify All"}
-            </button>
+              {error && (
+                <div style={{
+                  background: "rgba(248,113,113,0.08)",
+                  border: "1px solid rgba(248,113,113,0.3)",
+                  borderRadius: "10px", padding: "14px 16px",
+                  color: "#f87171", fontSize: "13px", marginBottom: "16px",
+                }}>{error}</div>
+              )}
 
-            {bulkResults.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <p className="font-semibold text-gray-700">{bulkResults.length} results</p>
-                  <div className="flex gap-3 text-sm">
-                    <span className="text-green-600 font-bold">{bulkResults.filter(r => r.valid).length} Valid</span>
-                    <span className="text-red-600 font-bold">{bulkResults.filter(r => !r.valid).length} Invalid</span>
+              {result && (
+                <div style={{
+                  borderRadius: "16px",
+                  border: result.valid ? "1px solid rgba(52,211,153,0.3)" : "1px solid rgba(248,113,113,0.3)",
+                  background: result.valid ? "rgba(52,211,153,0.05)" : "rgba(248,113,113,0.05)",
+                  padding: "28px",
+                }}>
+                  {/* Status */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
+                    <div style={{
+                      width: "56px", height: "56px", borderRadius: "14px",
+                      background: result.valid ? "rgba(52,211,153,0.15)" : "rgba(248,113,113,0.15)",
+                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px",
+                    }}>
+                      {result.valid ? "✅" : "❌"}
+                    </div>
+                    <div>
+                      <p style={{
+                        fontFamily: "'Playfair Display', serif",
+                        fontSize: "28px", fontWeight: "700",
+                        color: result.valid ? "#34d399" : "#f87171", lineHeight: "1",
+                      }}>{result.status}</p>
+                      <p style={{ fontSize: "12px", color: "rgba(180,195,230,0.5)", marginTop: "4px" }}>
+                        Token #{result.tokenId} · {result.credentialType}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  {bulkResults.map((r, i) => (
-                    <div key={i} className={`flex items-center justify-between p-3 rounded-lg border ${r.valid ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
-                      <div>
-                        <span className="font-mono text-sm font-bold">Token {r.tokenId}</span>
-                        {r.credentialType && <span className="text-gray-500 text-xs ml-2">{r.credentialType}</span>}
+
+                  {/* Details */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "16px" }}>
+                    {[
+                      ["ISSUED", new Date(result.issuedAt).toLocaleDateString()],
+                      ["EXPIRES", result.expiresAt ? new Date(result.expiresAt).toLocaleDateString() : "No Expiry"],
+                    ].map(([k, v]) => (
+                      <div key={k} style={{ background: "rgba(10,26,74,0.6)", borderRadius: "10px", padding: "12px 14px" }}>
+                        <p style={{ fontSize: "10px", color: "rgba(201,168,76,0.6)", fontWeight: "600", letterSpacing: "0.06em", marginBottom: "4px" }}>{k}</p>
+                        <p style={{ fontSize: "13px", color: "white", fontWeight: "500" }}>{v}</p>
                       </div>
-                      <span className={`text-sm font-bold ${r.valid ? "text-green-700" : "text-red-700"}`}>
-                        {r.valid ? "✅ VALID" : "❌ " + r.status}
+                    ))}
+                    <div style={{ background: "rgba(10,26,74,0.6)", borderRadius: "10px", padding: "12px 14px", gridColumn: "span 2" }}>
+                      <p style={{ fontSize: "10px", color: "rgba(201,168,76,0.6)", fontWeight: "600", letterSpacing: "0.06em", marginBottom: "4px" }}>ISSUER</p>
+                      <p style={{ fontSize: "11px", color: "rgba(180,195,230,0.6)", fontFamily: "'DM Mono', monospace", wordBreak: "break-all" }}>{result.issuer}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => window.open(`https://sepolia.etherscan.io/address/${result.issuer}`, "_blank")}
+                    style={{
+                      background: "transparent", border: "none", padding: 0,
+                      fontSize: "12px", color: "#c9a84c", cursor: "pointer",
+                      fontFamily: "'DM Sans', sans-serif", textDecoration: "underline",
+                    }}
+                  >
+                    View issuer on Etherscan →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Bulk Tab */}
+          {activeTab === "bulk" && (
+            <div>
+              <p style={{ fontSize: "13px", color: "rgba(180,195,230,0.5)", marginBottom: "16px" }}>
+                Enter one Token ID per line to verify multiple candidates
+              </p>
+              <textarea
+                value={bulkInput}
+                onChange={(e) => setBulkInput(e.target.value)}
+                placeholder={"1\n2\n3"}
+                rows={5}
+                style={{
+                  width: "100%", background: "rgba(5,15,46,0.8)",
+                  border: "1px solid rgba(201,168,76,0.2)",
+                  borderRadius: "10px", color: "white",
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: "13px", padding: "13px 16px",
+                  outline: "none", resize: "vertical",
+                  marginBottom: "12px", boxSizing: "border-box",
+                }}
+                onFocus={e => e.target.style.borderColor = "#c9a84c"}
+                onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"}
+              />
+              <button
+                onClick={handleBulkVerify}
+                disabled={bulkLoading}
+                style={{
+                  ...S.btnGold, width: "100%", marginBottom: "24px",
+                  opacity: bulkLoading ? 0.5 : 1, cursor: bulkLoading ? "not-allowed" : "pointer",
+                }}
+              >
+                {bulkLoading ? "Verifying..." : "Verify All"}
+              </button>
+
+              {bulkResults.length > 0 && (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                    <p style={{ fontSize: "13px", fontWeight: "600", color: "white" }}>
+                      {bulkResults.length} results
+                    </p>
+                    <div style={{ display: "flex", gap: "16px", fontSize: "12px" }}>
+                      <span style={{ color: "#34d399", fontWeight: "700" }}>
+                        {bulkResults.filter(r => r.valid).length} Valid
+                      </span>
+                      <span style={{ color: "#f87171", fontWeight: "700" }}>
+                        {bulkResults.filter(r => !r.valid).length} Invalid
                       </span>
                     </div>
-                  ))}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {bulkResults.map((r, i) => (
+                      <div key={i} style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        padding: "12px 16px", borderRadius: "10px",
+                        background: r.valid ? "rgba(52,211,153,0.05)" : "rgba(248,113,113,0.05)",
+                        border: r.valid ? "1px solid rgba(52,211,153,0.2)" : "1px solid rgba(248,113,113,0.2)",
+                      }}>
+                        <div>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "13px", fontWeight: "600", color: "#c9a84c" }}>
+                            Token #{r.tokenId}
+                          </span>
+                          {r.credentialType && (
+                            <span style={{ fontSize: "11px", color: "rgba(180,195,230,0.4)", marginLeft: "10px" }}>
+                              {r.credentialType}
+                            </span>
+                          )}
+                        </div>
+                        <span style={{
+                          fontSize: "12px", fontWeight: "700",
+                          color: r.valid ? "#34d399" : "#f87171",
+                        }}>
+                          {r.valid ? "✅ VALID" : "❌ " + r.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -14,15 +14,11 @@ export default function PassportPage() {
 
   const handleSearch = async () => {
     if (!walletAddress.trim()) return;
-    setLoading(true);
-    setError(null);
-    setCredentials([]);
-    setSearched(false);
+    setLoading(true); setError(null); setCredentials([]); setSearched(false);
     try {
       const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_ALCHEMY_URL);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
       const ids = await contract.getHolderCredentials(walletAddress);
-
       const creds = await Promise.all(
         ids.map(async (id) => {
           const cred = await contract.getCredential(Number(id));
@@ -31,27 +27,17 @@ export default function PassportPage() {
             const res = await fetch("https://gateway.pinata.cloud/ipfs/" + cred[3]);
             metadata = await res.json();
           } catch (_) {}
-
           let verifierCount = 0;
           try {
             let i = 0;
-            while (true) {
-              await contract.tokenVerifiers(Number(id), i);
-              verifierCount++;
-              i++;
-            }
+            while (true) { await contract.tokenVerifiers(Number(id), i); verifierCount++; i++; }
           } catch (_) {}
-
           const expiresAt = Number(cred[6]);
           const isExpired = expiresAt > 0 && expiresAt < Math.floor(Date.now() / 1000);
           const status = cred[7] ? "REVOKED" : isExpired ? "EXPIRED" : "VALID";
           const rep = calculateReputationScore(cred, verifierCount, metadata);
-
           return {
-            tokenId: id.toString(),
-            cred,
-            metadata,
-            status,
+            tokenId: id.toString(), cred, metadata, status,
             credentialType: cred[8],
             issuedAt: new Date(Number(cred[5]) * 1000).toLocaleDateString(),
             institution: metadata?.attributes?.institution || "Unknown",
@@ -59,48 +45,75 @@ export default function PassportPage() {
           };
         })
       );
-
       setCredentials(creds);
       if (creds.length > 0) {
-        const avg = Math.round(creds.reduce((sum, c) => sum + c.reputation.score, 0) / creds.length);
-        setOverallScore(avg);
+        setOverallScore(Math.round(creds.reduce((sum, c) => sum + c.reputation.score, 0) / creds.length));
       }
       setSearched(true);
-    } catch (err) {
-      setError("Failed to load: " + err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setError("Failed to load: " + err.message); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-900 py-10 px-4">
-      <div className="max-w-3xl mx-auto">
+    <div style={{
+      minHeight: "100vh",
+      background: "radial-gradient(ellipse at 20% 30%, rgba(15,36,96,0.5) 0%, transparent 60%), radial-gradient(ellipse at 80% 70%, rgba(201,168,76,0.06) 0%, transparent 50%), #020818",
+      fontFamily: "'DM Sans', sans-serif",
+      padding: "48px 24px",
+    }}>
+      <div style={{ maxWidth: "720px", margin: "0 auto" }}>
 
         {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1 mb-4">
-            <span className="text-blue-300 text-xs font-mono">CAREER PASSPORT</span>
-          </div>
-          <h1 className="text-4xl font-extrabold text-white mb-2">Blockchain Career Passport</h1>
-          <p className="text-blue-300 text-sm max-w-md mx-auto">
-            Enter any wallet address to view their complete verified credential history.
+        <div style={{ textAlign: "center", marginBottom: "48px" }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center",
+            background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.25)",
+            borderRadius: "20px", padding: "4px 14px", marginBottom: "16px",
+            fontSize: "11px", fontWeight: "600", letterSpacing: "0.1em", color: "#c9a84c",
+          }}>✦ CAREER PASSPORT</div>
+          <h1 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: "42px", fontWeight: "800", color: "white",
+            marginBottom: "12px", letterSpacing: "-0.02em",
+          }}>Blockchain Career Passport</h1>
+          <p style={{ fontSize: "14px", color: "rgba(180,195,230,0.6)", maxWidth: "440px", margin: "0 auto", lineHeight: "1.7" }}>
+            Enter any wallet address to view their complete verified credential history and trust score.
           </p>
         </div>
 
         {/* Search */}
-        <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-6 mb-8">
-          <div className="flex gap-3">
+        <div style={{
+          background: "linear-gradient(135deg, rgba(10,26,74,0.8), rgba(5,15,46,0.9))",
+          border: "1px solid rgba(201,168,76,0.2)",
+          borderRadius: "20px", padding: "24px", marginBottom: "28px",
+        }}>
+          <div style={{ display: "flex", gap: "12px" }}>
             <input
               value={walletAddress}
               onChange={(e) => setWalletAddress(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Enter wallet address (0x...)"
-              className="flex-1 bg-white/10 border border-white/20 text-white placeholder-blue-300 rounded-lg px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              style={{
+                flex: 1, background: "rgba(5,15,46,0.8)",
+                border: "1px solid rgba(201,168,76,0.2)",
+                borderRadius: "10px", color: "white",
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "13px", padding: "13px 16px", outline: "none",
+              }}
+              onFocus={e => e.target.style.borderColor = "#c9a84c"}
+              onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"}
             />
             <button
               onClick={handleSearch}
               disabled={loading}
-              className="bg-blue-500 hover:bg-blue-400 text-white px-6 py-3 rounded-lg font-bold transition disabled:opacity-50"
+              style={{
+                background: loading ? "rgba(201,168,76,0.3)" : "linear-gradient(135deg, #c9a84c, #d4b96a)",
+                border: "none", borderRadius: "10px",
+                padding: "13px 24px", fontSize: "14px",
+                fontWeight: "600", color: loading ? "rgba(2,8,24,0.4)" : "#020818",
+                cursor: loading ? "not-allowed" : "pointer",
+                fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
+              }}
             >
               {loading ? "Loading..." : "View Passport"}
             </button>
@@ -108,110 +121,153 @@ export default function PassportPage() {
         </div>
 
         {error && (
-          <div className="bg-red-500/20 border border-red-400 rounded-lg p-4 text-red-300 mb-6">{error}</div>
+          <div style={{
+            background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)",
+            borderRadius: "12px", padding: "14px 16px",
+            color: "#f87171", fontSize: "13px", marginBottom: "20px",
+          }}>{error}</div>
         )}
 
         {searched && credentials.length === 0 && (
-          <div className="text-center text-blue-300 py-10">
-            <p className="text-4xl mb-3">🎓</p>
-            <p>No credentials found for this wallet.</p>
+          <div style={{ textAlign: "center", padding: "60px", color: "rgba(180,195,230,0.5)" }}>
+            <p style={{ fontSize: "48px", marginBottom: "12px" }}>🎓</p>
+            <p style={{ fontSize: "14px" }}>No credentials found for this wallet.</p>
           </div>
         )}
 
         {credentials.length > 0 && (
           <div>
             {/* Overall Score Card */}
-            <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
+            <div style={{
+              background: "linear-gradient(135deg, rgba(10,26,74,0.9), rgba(5,15,46,0.95))",
+              border: "1px solid rgba(201,168,76,0.25)",
+              borderRadius: "20px", padding: "28px", marginBottom: "20px",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
                 <div>
-                  <p className="text-blue-300 text-xs mb-1">WALLET</p>
-                  <p className="text-white font-mono text-sm">{walletAddress.slice(0, 10)}...{walletAddress.slice(-8)}</p>
+                  <p style={{ fontSize: "10px", color: "rgba(201,168,76,0.6)", fontWeight: "600", letterSpacing: "0.08em", marginBottom: "6px" }}>WALLET</p>
+                  <p style={{ fontSize: "12px", color: "rgba(180,195,230,0.7)", fontFamily: "'DM Mono', monospace" }}>
+                    {walletAddress.slice(0, 10)}...{walletAddress.slice(-8)}
+                  </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-blue-300 text-xs mb-1">OVERALL TRUST SCORE</p>
-                  <p className="text-4xl font-extrabold text-white">{overallScore}<span className="text-blue-300 text-lg">/100</span></p>
+                <div style={{ textAlign: "right" }}>
+                  <p style={{ fontSize: "10px", color: "rgba(201,168,76,0.6)", fontWeight: "600", letterSpacing: "0.08em", marginBottom: "6px" }}>OVERALL TRUST SCORE</p>
+                  <p style={{ fontFamily: "'Playfair Display', serif", fontSize: "48px", fontWeight: "800", lineHeight: "1" }}>
+                    <span style={{ background: "linear-gradient(135deg, #e2ce94, #c9a84c)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                      {overallScore}
+                    </span>
+                    <span style={{ fontSize: "20px", color: "rgba(201,168,76,0.4)" }}>/100</span>
+                  </p>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="bg-white/10 rounded-xl p-3">
-                  <p className="text-2xl font-bold text-white">{credentials.length}</p>
-                  <p className="text-blue-300 text-xs">Total Credentials</p>
-                </div>
-                <div className="bg-white/10 rounded-xl p-3">
-                  <p className="text-2xl font-bold text-green-400">{credentials.filter(c => c.status === "VALID").length}</p>
-                  <p className="text-blue-300 text-xs">Valid</p>
-                </div>
-                <div className="bg-white/10 rounded-xl p-3">
-                  <p className="text-2xl font-bold text-yellow-400">{credentials.filter(c => c.status !== "VALID").length}</p>
-                  <p className="text-blue-300 text-xs">Inactive</p>
-                </div>
+
+              {/* Score bar */}
+              <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "999px", height: "6px", marginBottom: "20px" }}>
+                <div style={{
+                  height: "6px", borderRadius: "999px",
+                  background: "linear-gradient(90deg, #c9a84c, #e2ce94)",
+                  width: `${overallScore}%`, transition: "width 1s ease",
+                }} />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+                {[
+                  { label: "Total Credentials", value: credentials.length, color: "#c9a84c" },
+                  { label: "Valid", value: credentials.filter(c => c.status === "VALID").length, color: "#34d399" },
+                  { label: "Inactive", value: credentials.filter(c => c.status !== "VALID").length, color: "#fbbf24" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} style={{
+                    background: "rgba(5,15,46,0.6)", borderRadius: "12px",
+                    padding: "14px", textAlign: "center",
+                  }}>
+                    <p style={{ fontFamily: "'Playfair Display', serif", fontSize: "28px", fontWeight: "700", color, lineHeight: "1" }}>{value}</p>
+                    <p style={{ fontSize: "11px", color: "rgba(180,195,230,0.5)", marginTop: "4px" }}>{label}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Credentials Timeline */}
-            <div className="space-y-4">
-              {credentials.map((cred, i) => (
-                <div key={i} className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <p className="font-bold text-white text-lg">{cred.metadata?.name || "Credential"}</p>
-                      <p className="text-blue-300 text-sm">{cred.institution}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className={`text-xs px-2 py-1 rounded-full font-bold ${
-                        cred.status === "VALID" ? "bg-green-500/20 text-green-400" :
-                        cred.status === "REVOKED" ? "bg-red-500/20 text-red-400" :
-                        "bg-yellow-500/20 text-yellow-400"
-                      }`}>
-                        {cred.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3 mb-4 text-xs">
-                    <div>
-                      <p className="text-blue-400">TYPE</p>
-                      <p className="text-white font-semibold">{cred.credentialType}</p>
-                    </div>
-                    <div>
-                      <p className="text-blue-400">ISSUED</p>
-                      <p className="text-white font-semibold">{cred.issuedAt}</p>
-                    </div>
-                    <div>
-                      <p className="text-blue-400">TOKEN</p>
-                      <p className="text-white font-semibold font-mono">#{cred.tokenId}</p>
-                    </div>
-                  </div>
-
-                  {/* Reputation Bar */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-blue-300 text-xs">Trust Score</span>
-                    <div className="flex-1 bg-white/10 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${
-                          cred.reputation.color === "green" ? "bg-green-400" :
-                          cred.reputation.color === "yellow" ? "bg-yellow-400" : "bg-red-400"
-                        }`}
-                        style={{ width: `${cred.reputation.score}%` }}
-                      />
-                    </div>
-                    <span className="text-white font-bold text-sm">{cred.reputation.score}/100</span>
-                    <span className={`text-xs font-bold ${
-                      cred.reputation.color === "green" ? "text-green-400" :
-                      cred.reputation.color === "yellow" ? "text-yellow-400" : "text-red-400"
-                    }`}>
-                      {cred.reputation.grade}
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={() => window.open(`/verify?id=${cred.tokenId}`, "_blank")}
-                    className="mt-3 text-xs text-blue-400 hover:text-blue-300 transition"
+            {/* Credential Cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {credentials.map((cred, i) => {
+                const repColor = cred.reputation.color === "green" ? "#34d399" : cred.reputation.color === "yellow" ? "#fbbf24" : "#f87171";
+                const statusColor = cred.status === "VALID" ? "#34d399" : cred.status === "REVOKED" ? "#f87171" : "#fbbf24";
+                return (
+                  <div key={i} style={{
+                    background: "linear-gradient(135deg, rgba(10,26,74,0.8), rgba(5,15,46,0.9))",
+                    border: "1px solid rgba(201,168,76,0.12)",
+                    borderRadius: "18px", padding: "24px",
+                    position: "relative", overflow: "hidden",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.3)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.12)"; e.currentTarget.style.transform = "translateY(0)"; }}
                   >
-                    Verify on blockchain →
-                  </button>
-                </div>
-              ))}
+                    {/* Left accent */}
+                    <div style={{
+                      position: "absolute", left: 0, top: 0, bottom: 0,
+                      width: "3px", background: statusColor, borderRadius: "18px 0 0 18px",
+                    }} />
+
+                    <div style={{ paddingLeft: "12px" }}>
+                      {/* Header */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+                        <div>
+                          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: "20px", fontWeight: "700", color: "white", marginBottom: "4px" }}>
+                            {cred.metadata?.name || "Credential"}
+                          </p>
+                          <p style={{ fontSize: "12px", color: "rgba(201,168,76,0.6)" }}>{cred.institution}</p>
+                        </div>
+                        <span style={{
+                          background: `${statusColor}18`,
+                          border: `1px solid ${statusColor}40`,
+                          borderRadius: "20px", padding: "3px 10px",
+                          fontSize: "11px", fontWeight: "700", color: statusColor,
+                          letterSpacing: "0.06em",
+                        }}>{cred.status}</span>
+                      </div>
+
+                      {/* Details */}
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "16px" }}>
+                        {[
+                          ["TYPE", cred.credentialType],
+                          ["ISSUED", cred.issuedAt],
+                          ["TOKEN", "#" + cred.tokenId],
+                        ].map(([k, v]) => (
+                          <div key={k}>
+                            <p style={{ fontSize: "10px", color: "rgba(201,168,76,0.5)", fontWeight: "600", letterSpacing: "0.06em", marginBottom: "3px" }}>{k}</p>
+                            <p style={{ fontSize: "13px", color: "white", fontWeight: "500", fontFamily: k === "TOKEN" ? "'DM Mono', monospace" : "inherit" }}>{v}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Trust Score Bar */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+                        <span style={{ fontSize: "11px", color: "rgba(180,195,230,0.4)", whiteSpace: "nowrap" }}>Trust Score</span>
+                        <div style={{ flex: 1, background: "rgba(255,255,255,0.06)", borderRadius: "999px", height: "5px" }}>
+                          <div style={{
+                            height: "5px", borderRadius: "999px", background: repColor,
+                            width: `${cred.reputation.score}%`,
+                          }} />
+                        </div>
+                        <span style={{ fontSize: "13px", fontWeight: "700", color: repColor }}>{cred.reputation.score}</span>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: repColor }}>{cred.reputation.grade}</span>
+                      </div>
+
+                      <button
+                        onClick={() => window.open(`/verify?id=${cred.tokenId}`, "_blank")}
+                        style={{
+                          background: "transparent", border: "none", padding: 0,
+                          fontSize: "12px", color: "#c9a84c", cursor: "pointer",
+                          fontFamily: "'DM Sans', sans-serif",
+                        }}
+                      >
+                        Verify on blockchain →
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
